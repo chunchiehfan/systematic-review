@@ -2,6 +2,10 @@
 
 A Claude Code skill that conducts PRISMA 2020-compliant systematic reviews and meta-analyses autonomously.
 
+## Workflow
+
+![Agent Workflow Diagram](docs/workflow_diagram.png)
+
 ## How It Works
 
 The skill uses a **two-stage architecture**:
