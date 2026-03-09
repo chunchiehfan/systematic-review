@@ -1,0 +1,89 @@
+{
+  "skill_name": "systematic-review",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "I want to do a systematic review on the effectiveness of SGLT2 inhibitors in reducing hospitalization for heart failure in patients with type 2 diabetes. Can you help me get started?",
+      "expected_output": "Skill should: (1) work through PICO framework with the user — Population: adults with T2DM, Intervention: SGLT2 inhibitors, Comparison: placebo/standard care, Outcome: HF hospitalization; (2) propose MeSH terms and Boolean search string; (3) save pico.md; (4) offer to proceed to PubMed search. Should NOT skip to running the search without confirming PICO first.",
+      "files": [],
+      "assertions": [
+        {
+          "type": "contains",
+          "description": "Produces a PICO table with all four elements defined",
+          "check": "output mentions Population, Intervention, Comparison/Comparator, and Outcome"
+        },
+        {
+          "type": "contains",
+          "description": "Proposes MeSH terms or Boolean search string",
+          "check": "output includes MeSH terms (e.g. [MeSH]) or Boolean operators (AND, OR) in a search string"
+        },
+        {
+          "type": "contains",
+          "description": "Creates or mentions saving pico.md",
+          "check": "output references pico.md or saving the PICO question"
+        },
+        {
+          "type": "contains",
+          "description": "Ends with a user checkpoint before proceeding",
+          "check": "output asks user to confirm or approve before moving to Phase 2"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "I need to do a meta-analysis on COVID-19 mortality risk factors. I'm specifically interested in whether obesity increases mortality risk. I already have a list of 12 papers I want to include — how do I extract the data and run the analysis?",
+      "expected_output": "Skill should: (1) clarify the effect measure (OR or RR given binary outcome mortality); (2) provide the correct CSV template for OR or RR extraction; (3) explain what columns to fill in with what data; (4) show how to run meta_analysis.py and generate_figures.py. Should address that this user already has papers (skip search phase) and focus on extraction + analysis phases.",
+      "files": [],
+      "assertions": [
+        {
+          "type": "contains",
+          "description": "Recommends OR or RR as the appropriate effect measure for mortality (binary outcome)",
+          "check": "output mentions OR (odds ratio) or RR (risk ratio) as appropriate for mortality"
+        },
+        {
+          "type": "contains",
+          "description": "Provides the CSV extraction template with correct columns",
+          "check": "output shows CSV columns: study, events_treatment, total_treatment, events_control, total_control OR the HR equivalent"
+        },
+        {
+          "type": "contains",
+          "description": "Provides the meta_analysis.py command",
+          "check": "output includes meta_analysis.py command with --measure flag"
+        },
+        {
+          "type": "contains",
+          "description": "Provides the generate_figures.py command for forest plot",
+          "check": "output includes generate_figures.py or mentions forest plot generation"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "Can you help me run a full systematic review comparing laparoscopic vs open appendectomy for complicated appendicitis? I want the whole thing — search, screening, meta-analysis, and a final report with forest plots.",
+      "expected_output": "Skill should walk through all 6 phases in sequence: (1) PICO refinement with MeSH terms for laparoscopic/open appendectomy and relevant outcomes (complications, LOS, mortality); (2) PubMed search command; (3) screening criteria definition; (4) data extraction template; (5) meta-analysis command; (6) report structure outline. Should identify appropriate effect measures (OR for complications/mortality, MD for length of stay). Should be comprehensive and structured.",
+      "files": [],
+      "assertions": [
+        {
+          "type": "contains",
+          "description": "Defines PICO for this specific surgical comparison",
+          "check": "output defines Population (complicated appendicitis), Intervention (laparoscopic), Comparison (open), Outcome"
+        },
+        {
+          "type": "contains",
+          "description": "Provides PubMed search command or search string for appendectomy",
+          "check": "output includes pubmed_search.py command OR a search string containing 'appendect' or 'appendicitis'"
+        },
+        {
+          "type": "contains",
+          "description": "Identifies multiple relevant outcomes with appropriate effect measures",
+          "check": "output mentions at least 2 outcomes (e.g. complications, length of stay, mortality) and appropriate effect measures"
+        },
+        {
+          "type": "contains",
+          "description": "References final report structure or executive summary",
+          "check": "output mentions systematic_review_report.md or executive summary or report structure"
+        }
+      ]
+    }
+  ]
+}
