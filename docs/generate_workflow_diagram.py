@@ -1,187 +1,339 @@
 #!/usr/bin/env python3
-"""Generate workflow schema diagram for the systematic-review skill."""
+"""Generate a clean workflow diagram for the systematic-review skill."""
 import matplotlib.pyplot as plt
-import matplotlib.patches as mpatches
-from matplotlib.patches import FancyBboxPatch, FancyArrowPatch
+from matplotlib.patches import FancyBboxPatch
+import matplotlib.patheffects as pe
 
-fig, ax = plt.subplots(1, 1, figsize=(16, 22))
-ax.set_xlim(0, 16)
-ax.set_ylim(0, 22)
+# ── Layout constants ──
+FIG_W, FIG_H = 18, 28
+COL_AGENT = 3.5      # center x for Agent column
+COL_SCRIPT = 9.5     # center x for Scripts column
+COL_OUTPUT = 15.0    # center x for Outputs column
+
+# ── Colors ──
+C = {
+    "user":     "#3B82F6",
+    "agent":    "#8B5CF6",
+    "script":   "#10B981",
+    "output":   "#F59E0B",
+    "decision": "#EF4444",
+    "bg_s1":    "#F1F5F9",
+    "bg_s2":    "#FEF2F2",
+    "border_s1":"#64748B",
+    "border_s2":"#DC2626",
+    "text":     "#1E293B",
+    "subtle":   "#94A3B8",
+    "white":    "#FFFFFF",
+    "arrow":    "#64748B",
+}
+
+fig, ax = plt.subplots(1, 1, figsize=(FIG_W, FIG_H))
+ax.set_xlim(0, FIG_W)
+ax.set_ylim(0, FIG_H)
 ax.axis("off")
 fig.patch.set_facecolor("white")
 
-# Colors
-C_USER = "#4A90D9"
-C_CLAUDE = "#7B68EE"
-C_SCRIPT = "#2ECC71"
-C_OUTPUT = "#F39C12"
-C_DECISION = "#E74C3C"
-C_STAGE = "#34495E"
-C_ARROW = "#555555"
-C_RERUN = "#E74C3C"
 
-def box(x, y, w, h, text, color, fontsize=8, textcolor="white", alpha=0.9, bold=False):
-    rect = FancyBboxPatch((x, y), w, h, boxstyle="round,pad=0.15",
-                          facecolor=color, edgecolor="none", alpha=alpha, zorder=2)
+def rounded_box(x, y, w, h, text, color, fontsize=10, textcolor="white",
+                alpha=0.95, bold=False, border=None, border_width=1.5):
+    """Draw a rounded rectangle with centered text."""
+    ec = border if border else "none"
+    rect = FancyBboxPatch((x - w/2, y - h/2), w, h,
+                          boxstyle="round,pad=0.2", facecolor=color,
+                          edgecolor=ec, linewidth=border_width,
+                          alpha=alpha, zorder=2)
     ax.add_patch(rect)
     weight = "bold" if bold else "normal"
-    ax.text(x + w/2, y + h/2, text, ha="center", va="center",
-            fontsize=fontsize, color=textcolor, weight=weight, zorder=3,
-            wrap=True)
+    ax.text(x, y, text, ha="center", va="center", fontsize=fontsize,
+            color=textcolor, weight=weight, zorder=3,
+            linespacing=1.4)
 
-def arrow(x1, y1, x2, y2, color=C_ARROW, style="-|>", lw=1.2, ls="-"):
+
+def draw_arrow(x1, y1, x2, y2, color=C["arrow"], lw=1.5, style="-|>"):
     ax.annotate("", xy=(x2, y2), xytext=(x1, y1),
-                arrowprops=dict(arrowstyle=style, color=color, lw=lw, ls=ls),
+                arrowprops=dict(arrowstyle=style, color=color, lw=lw),
                 zorder=1)
 
-def label(x, y, text, fontsize=7, color="#666666", ha="center"):
-    ax.text(x, y, text, ha=ha, va="center", fontsize=fontsize, color=color, style="italic", zorder=4)
 
-# ── Title ──
-ax.text(8, 21.5, "Systematic Review Skill — Agent Workflow", ha="center", va="center",
-        fontsize=16, weight="bold", color=C_STAGE)
-ax.text(8, 21.1, "Two-stage autonomous architecture with decision logging", ha="center", va="center",
-        fontsize=9, color="#888888")
+def draw_arrow_curved(x1, y1, x2, y2, color=C["arrow"], lw=1.5,
+                      connectionstyle="arc3,rad=0.15"):
+    ax.annotate("", xy=(x2, y2), xytext=(x1, y1),
+                arrowprops=dict(arrowstyle="-|>", color=color, lw=lw,
+                                connectionstyle=connectionstyle),
+                zorder=1)
 
-# ── User Input ──
-box(5.5, 20.2, 5, 0.6, "User Query\n\"Do a systematic review on SGLT2i and heart failure\"", C_USER, fontsize=8, bold=True)
-arrow(8, 20.2, 8, 19.9)
 
-# ── Stage 1 Banner ──
-rect = FancyBboxPatch((1, 8.6), 14, 11.2, boxstyle="round,pad=0.2",
-                       facecolor="#F8F9FA", edgecolor=C_STAGE, linewidth=2, alpha=0.5, zorder=0)
-ax.add_patch(rect)
-ax.text(8, 19.55, "STAGE 1: Autonomous Run (No User Interaction)", ha="center", va="center",
-        fontsize=11, weight="bold", color=C_STAGE)
+# ═══════════════════════════════════════════
+# TITLE
+# ═══════════════════════════════════════════
+ax.text(FIG_W/2, 27.3, "Systematic Review Skill", ha="center", va="center",
+        fontsize=22, weight="bold", color=C["text"])
+ax.text(FIG_W/2, 26.7, "Two-Stage Autonomous Workflow with Decision Logging",
+        ha="center", va="center", fontsize=13, color=C["subtle"])
 
-# ── Phase 1 ──
-box(1.5, 18.3, 3.5, 0.9, "Phase 1: Topic Refinement\n• PICO(S) definition\n• MeSH terms\n• Search string", C_CLAUDE, fontsize=7)
-box(5.5, 18.5, 2.2, 0.5, "decisions_logger\n.log(phase=1)", C_DECISION, fontsize=6.5)
-box(8.2, 18.5, 1.8, 0.5, "pico.md", C_OUTPUT, fontsize=7, textcolor="#333333")
-arrow(5, 18.75, 5.5, 18.75)
-arrow(7.7, 18.75, 8.2, 18.75)
-arrow(3.25, 18.3, 3.25, 17.5)
+# ═══════════════════════════════════════════
+# USER INPUT
+# ═══════════════════════════════════════════
+rounded_box(FIG_W/2, 25.8, 10, 0.9,
+            'User:  "Systematic review on SGLT2i and heart failure"',
+            C["user"], fontsize=12, bold=True)
 
-# ── Phase 2 ──
-box(1.5, 16.5, 3.5, 0.9, "Phase 2: PubMed Search\n+ PMC Full-Text Fetch", C_CLAUDE, fontsize=7)
-box(5.5, 16.9, 2.5, 0.45, "pubmed_search.py", C_SCRIPT, fontsize=7)
-box(5.5, 16.35, 2.5, 0.45, "pmc_fulltext.py", C_SCRIPT, fontsize=7)
-box(8.5, 16.5, 2.5, 0.45, "pubmed_results.json", C_OUTPUT, fontsize=6.5, textcolor="#333333")
-box(8.5, 16.0, 2.0, 0.4, "fulltext_data/", C_OUTPUT, fontsize=6.5, textcolor="#333333")
-arrow(5, 17.1, 5.5, 17.1)
-arrow(5, 16.6, 5.5, 16.6)
-arrow(8, 17.1, 8.5, 16.7)
-arrow(8, 16.6, 8.5, 16.2)
-box(11.5, 16.65, 2.2, 0.5, "decisions_logger\n.log(phase=2)", C_DECISION, fontsize=6.5)
-arrow(11, 16.7, 11.5, 16.9)
-arrow(3.25, 16.5, 3.25, 15.7)
 
-# ── Phase 3 ──
-box(1.5, 14.7, 3.5, 0.9, "Phase 3: Screening\n• Auto-include/exclude\n• Uncertain → best guess", C_CLAUDE, fontsize=7)
-box(5.5, 14.9, 2.7, 0.5, "screening_results.json", C_OUTPUT, fontsize=6.5, textcolor="#333333")
-box(8.7, 14.9, 2.2, 0.5, "decisions_logger\n.log(phase=3)", C_DECISION, fontsize=6.5)
-arrow(5, 15.15, 5.5, 15.15)
-arrow(8.2, 15.15, 8.7, 15.15)
-arrow(3.25, 14.7, 3.25, 13.9)
+# ═══════════════════════════════════════════
+# STAGE 1 CONTAINER
+# ═══════════════════════════════════════════
+s1_top, s1_bot = 24.8, 10.2
+s1_rect = FancyBboxPatch((0.5, s1_bot), FIG_W - 1, s1_top - s1_bot,
+                          boxstyle="round,pad=0.3", facecolor=C["bg_s1"],
+                          edgecolor=C["border_s1"], linewidth=2.5,
+                          alpha=0.4, zorder=0)
+ax.add_patch(s1_rect)
+ax.text(FIG_W/2, s1_top - 0.4,
+        "STAGE 1 :  Autonomous Execution  (no user interaction)",
+        ha="center", va="center", fontsize=14, weight="bold",
+        color=C["border_s1"])
 
-# ── Phase 4 ──
-box(1.5, 12.9, 3.5, 0.9, "Phase 4: Data Extraction\n• Effect measure survey\n• Drug stratification", C_CLAUDE, fontsize=7)
-box(5.5, 13.3, 2.5, 0.45, "extracted_data.csv", C_OUTPUT, fontsize=6.5, textcolor="#333333")
-box(5.5, 12.75, 2.8, 0.45, "study_characteristics.csv", C_OUTPUT, fontsize=6.5, textcolor="#333333")
-box(8.7, 13.1, 2.2, 0.5, "decisions_logger\n.log(phase=4)", C_DECISION, fontsize=6.5)
-arrow(5, 13.5, 5.5, 13.5)
-arrow(5, 13.0, 5.5, 13.0)
-arrow(8.3, 13.3, 8.7, 13.35)
-arrow(3.25, 12.9, 3.25, 12.1)
+# Column headers
+header_y = s1_top - 1.1
+for cx, label in [(COL_AGENT, "Claude Agent"),
+                  (COL_SCRIPT, "Python Scripts"),
+                  (COL_OUTPUT, "Outputs")]:
+    ax.text(cx, header_y, label, ha="center", va="center",
+            fontsize=12, weight="bold", color=C["subtle"],
+            path_effects=[pe.withStroke(linewidth=3, foreground="white")])
 
-# ── Phase 5 ──
-box(1.5, 11.1, 3.5, 0.9, "Phase 5: Meta-Analysis\n• Pooling + heterogeneity\n• Sensitivity analyses", C_CLAUDE, fontsize=7)
-box(5.5, 11.5, 2.3, 0.45, "meta_analysis.py", C_SCRIPT, fontsize=7)
-box(5.5, 10.95, 2.5, 0.45, "generate_figures.py", C_SCRIPT, fontsize=7)
-box(8.5, 11.5, 2.2, 0.45, "meta_results.json", C_OUTPUT, fontsize=6.5, textcolor="#333333")
-box(8.5, 10.95, 2.2, 0.45, "forest_plot.png\nfunnel_plot.png", C_OUTPUT, fontsize=5.5, textcolor="#333333")
-box(11.5, 11.2, 2.2, 0.5, "decisions_logger\n.log(phase=5)", C_DECISION, fontsize=6.5)
-arrow(5, 11.55, 5.5, 11.7)
-arrow(5, 11.2, 5.5, 11.2)
-arrow(7.8, 11.7, 8.5, 11.7)
-arrow(8, 11.2, 8.5, 11.2)
-arrow(11, 11.5, 11.5, 11.45)
-arrow(3.25, 11.1, 3.25, 10.3)
+# Vertical lane dividers
+for lx in [6.5, 12.25]:
+    ax.plot([lx, lx], [s1_bot + 0.3, header_y - 0.4],
+            color="#E2E8F0", lw=1, ls="--", zorder=0)
 
-# ── Phase 6 ──
-box(1.5, 9.3, 3.5, 0.9, "Phase 6: Report Generation\n• PRISMA report\n• GRADE assessment", C_CLAUDE, fontsize=7)
-box(5.5, 9.65, 3.2, 0.45, "generate_review_report.py", C_SCRIPT, fontsize=7)
-box(9.2, 9.65, 2.8, 0.45, "draft_review.md", C_OUTPUT, fontsize=7, textcolor="#333333")
-box(9.2, 9.1, 2.8, 0.45, "decisions_log.json", C_DECISION, fontsize=7, textcolor="white")
-arrow(5, 9.75, 5.5, 9.87)
-arrow(8.7, 9.87, 9.2, 9.87)
-arrow(5, 9.5, 9.2, 9.32)
+# ═══════════════════════════════════════════
+# PHASE ROWS
+# ═══════════════════════════════════════════
+phases = [
+    {
+        "y": 22.6,
+        "label": "Phase 1\nTopic Refinement",
+        "detail": "PICO(S) + MeSH terms\n+ search string",
+        "scripts": None,
+        "outputs": "pico.md",
+        "log": True,
+    },
+    {
+        "y": 20.8,
+        "label": "Phase 2\nLiterature Search",
+        "detail": "PubMed search\n+ PMC full text",
+        "scripts": "pubmed_search.py\npmc_fulltext.py",
+        "outputs": "pubmed_results.json\nfulltext_data/",
+        "log": True,
+    },
+    {
+        "y": 19.0,
+        "label": "Phase 3\nScreening",
+        "detail": "Confidence tiers:\nauto-include / exclude / uncertain",
+        "scripts": None,
+        "outputs": "screening_results.json\nprisma_data.json",
+        "log": True,
+    },
+    {
+        "y": 17.2,
+        "label": "Phase 4\nData Extraction",
+        "detail": "Effect measure survey\n+ drug stratification",
+        "scripts": None,
+        "outputs": "extracted_data.csv\nstudy_characteristics.csv",
+        "log": True,
+    },
+    {
+        "y": 15.4,
+        "label": "Phase 5\nMeta-Analysis",
+        "detail": "Pooling, heterogeneity\n+ sensitivity analyses",
+        "scripts": "meta_analysis.py\ngenerate_figures.py",
+        "outputs": "meta_results.json\nforest_plot.png\nfunnel_plot.png",
+        "log": True,
+    },
+    {
+        "y": 13.4,
+        "label": "Phase 6\nReport & Review",
+        "detail": "PRISMA report\n+ GRADE + decision review",
+        "scripts": "generate_review_report.py",
+        "outputs": "draft_review.md\ndecisions_log.json",
+        "log": True,
+    },
+]
 
-# ── Stage 2 Banner ──
-rect2 = FancyBboxPatch((1, 1.5), 14, 6.8, boxstyle="round,pad=0.2",
-                        facecolor="#FFF5F5", edgecolor=C_RERUN, linewidth=2, alpha=0.4, zorder=0)
-ax.add_patch(rect2)
-ax.text(8, 8.0, "STAGE 2: User Review & Selective Rerun", ha="center", va="center",
-        fontsize=11, weight="bold", color=C_RERUN)
+BOX_W_AGENT = 4.8
+BOX_W_SCRIPT = 4.2
+BOX_W_OUTPUT = 4.2
+BOX_H = 1.3
+
+for i, p in enumerate(phases):
+    y = p["y"]
+
+    # Agent box
+    rounded_box(COL_AGENT, y, BOX_W_AGENT, BOX_H,
+                f"{p['label']}\n{p['detail']}", C["agent"],
+                fontsize=9.5, bold=False)
+
+    # Script box (if any)
+    if p["scripts"]:
+        rounded_box(COL_SCRIPT, y, BOX_W_SCRIPT, BOX_H,
+                    p["scripts"], C["script"], fontsize=10)
+        draw_arrow(COL_AGENT + BOX_W_AGENT/2, y,
+                   COL_SCRIPT - BOX_W_SCRIPT/2, y)
+
+    # Output box
+    rounded_box(COL_OUTPUT, y, BOX_W_OUTPUT, BOX_H,
+                p["outputs"], C["output"], fontsize=10, textcolor="#333333")
+    if p["scripts"]:
+        draw_arrow(COL_SCRIPT + BOX_W_SCRIPT/2, y,
+                   COL_OUTPUT - BOX_W_OUTPUT/2, y)
+    else:
+        draw_arrow(COL_AGENT + BOX_W_AGENT/2, y,
+                   COL_OUTPUT - BOX_W_OUTPUT/2, y)
+
+    # Decision logger indicator
+    if p["log"]:
+        ax.text(COL_AGENT + BOX_W_AGENT/2 + 0.15, y + BOX_H/2 - 0.15, "●",
+                fontsize=8, color=C["decision"], ha="left", va="top", zorder=4)
+
+    # Vertical arrow to next phase
+    if i < len(phases) - 1:
+        next_y = phases[i + 1]["y"]
+        draw_arrow(COL_AGENT, y - BOX_H/2,
+                   COL_AGENT, next_y + BOX_H/2,
+                   color=C["agent"], lw=2)
+
+# Decision logger side note
+ax.text(COL_AGENT + BOX_W_AGENT/2 + 0.6, 22.6 + BOX_H/2 - 0.15,
+        "● = decision logged", fontsize=9, color=C["decision"],
+        ha="left", va="top", style="italic")
+
+# Arrow from user to Phase 1
+draw_arrow(FIG_W/2, 25.35, COL_AGENT, 22.6 + BOX_H/2,
+           color=C["user"], lw=2)
+
+
+# ═══════════════════════════════════════════
+# STAGE 2 CONTAINER
+# ═══════════════════════════════════════════
+s2_top, s2_bot = 9.6, 1.8
+s2_rect = FancyBboxPatch((0.5, s2_bot), FIG_W - 1, s2_top - s2_bot,
+                          boxstyle="round,pad=0.3", facecolor=C["bg_s2"],
+                          edgecolor=C["border_s2"], linewidth=2.5,
+                          alpha=0.3, zorder=0)
+ax.add_patch(s2_rect)
+ax.text(FIG_W/2, s2_top - 0.4,
+        "STAGE 2 :  User Review & Selective Rerun",
+        ha="center", va="center", fontsize=14, weight="bold",
+        color=C["border_s2"])
+
+# Arrow from Stage 1 to Stage 2
+draw_arrow(FIG_W/2, s1_bot - 0.05, FIG_W/2, s2_top + 0.05,
+           color=C["arrow"], lw=2)
+ax.text(FIG_W/2 + 0.3, (s1_bot + s2_top) / 2,
+        "presents draft_review.md", fontsize=10, color=C["subtle"],
+        ha="left", va="center", style="italic")
 
 # ── User Review ──
-box(3, 6.9, 4.5, 0.7, "User Reviews draft_review.md\n✓ Pre-checked (auto) — skim    ☐ Unchecked — review", C_USER, fontsize=7, bold=True)
-arrow(8, 8.8, 8, 7.6)
-label(8.3, 8.2, "presents to user", fontsize=7)
+user_review_y = 8.0
+rounded_box(FIG_W/2, user_review_y, 12, 1.0,
+            "User Reviews draft_review.md\n"
+            "✓ Pre-checked = confident decisions      "
+            "☐ Unchecked = needs attention      "
+            "✎ Override via \"Change to\" fields",
+            C["user"], fontsize=10.5, bold=True)
 
-# ── Decision Diamond ──
-diamond_x, diamond_y = 8, 5.8
-diamond_size = 0.6
-diamond = plt.Polygon([(diamond_x, diamond_y + diamond_size),
-                        (diamond_x + diamond_size*1.5, diamond_y),
-                        (diamond_x, diamond_y - diamond_size),
-                        (diamond_x - diamond_size*1.5, diamond_y)],
-                       facecolor="#F8F9FA", edgecolor=C_STAGE, linewidth=1.5, zorder=2)
+# ── Decision diamond ──
+diamond_y = 6.3
+diamond_x = FIG_W / 2
+ds = 0.7
+diamond = plt.Polygon([(diamond_x, diamond_y + ds),
+                        (diamond_x + ds * 1.5, diamond_y),
+                        (diamond_x, diamond_y - ds),
+                        (diamond_x - ds * 1.5, diamond_y)],
+                       facecolor="white", edgecolor=C["border_s1"],
+                       linewidth=2, zorder=2)
 ax.add_patch(diamond)
-ax.text(diamond_x, diamond_y, "Changes\nmade?", ha="center", va="center", fontsize=7, weight="bold", color=C_STAGE, zorder=3)
+ax.text(diamond_x, diamond_y, "Changes\nmade?", ha="center", va="center",
+        fontsize=10, weight="bold", color=C["text"], zorder=3)
 
-arrow(8, 6.9, 8, 6.4)
+draw_arrow(diamond_x, user_review_y - 0.5, diamond_x, diamond_y + ds,
+           color=C["arrow"], lw=2)
 
-# ── No Changes Path ──
-box(10.5, 5.5, 3, 0.6, "Finalize Report\nsystematic_review_report.md", C_OUTPUT, fontsize=7, textcolor="#333333")
-arrow(9.2, 5.8, 10.5, 5.8)
-label(9.85, 6.05, "No", fontsize=7, color=C_STAGE)
+# ── No path → Finalize ──
+finalize_x = 14
+rounded_box(finalize_x, diamond_y, 4.5, 0.9,
+            "Finalize Report ✓", C["output"],
+            fontsize=12, textcolor="#333333", bold=True)
+draw_arrow(diamond_x + ds * 1.5, diamond_y, finalize_x - 2.25, diamond_y,
+           color=C["arrow"], lw=2)
+ax.text(diamond_x + ds * 1.5 + 0.3, diamond_y + 0.3, "No changes",
+        fontsize=10, color=C["border_s1"], weight="bold")
 
-# ── Changes Path ──
-box(2.5, 4.5, 3.5, 0.7, "rerun_from_changes.py\nDetect changed decisions\nDetermine rerun scope", C_SCRIPT, fontsize=7)
-arrow(6.8, 5.8, 6, 5.0)
-label(5.8, 5.6, "Yes", fontsize=7, color=C_RERUN)
+# ── Yes path → Rerun ──
+rerun_x = 5
+rerun_y = 4.2
+rounded_box(rerun_x, rerun_y, 5.5, 1.2,
+            "rerun_from_changes.py\nDetect changes → rerun scope",
+            C["script"], fontsize=10.5)
+draw_arrow(diamond_x - ds * 1.5, diamond_y, rerun_x + 2.75, diamond_y,
+           color=C["border_s2"], lw=2)
+draw_arrow(rerun_x, diamond_y - ds, rerun_x, rerun_y + 0.6,
+           color=C["border_s2"], lw=2)
+ax.text(diamond_x - ds * 1.5 - 0.3, diamond_y + 0.3, "Yes",
+        fontsize=10, color=C["border_s2"], weight="bold", ha="right")
 
-# ── Rerun ──
-box(2.5, 3.2, 3.5, 0.9, "Rerun Affected Phases\n(earliest change → Phase 6)\nwith updated decisions", C_CLAUDE, fontsize=7)
-arrow(4.25, 4.5, 4.25, 4.1)
+# ── Rerun phases ──
+rerun2_y = 2.7
+rounded_box(FIG_W/2, rerun2_y, 8, 1.0,
+            "Rerun affected phases (earliest change → Phase 6)  →  Regenerate draft_review.md",
+            C["agent"], fontsize=10.5, bold=True)
+draw_arrow(rerun_x + 2.75, rerun_y, FIG_W/2 - 4, rerun2_y + 0.5,
+           color=C["border_s2"], lw=2)
 
-# ── Loop back ──
-box(2.5, 2.0, 3.5, 0.7, "Regenerate\ndraft_review.md", C_SCRIPT, fontsize=7)
-arrow(4.25, 3.2, 4.25, 2.7)
-# Arrow going back up to user review
-arrow(6, 2.35, 7.5, 2.35)
-arrow(7.5, 2.35, 12.5, 2.35)
-arrow(12.5, 2.35, 12.5, 7.25)
-arrow(12.5, 7.25, 7.5, 7.25)
+# Loop arrow back up to user review
+ax.annotate("", xy=(FIG_W - 1.5, user_review_y), xytext=(FIG_W - 1.5, rerun2_y),
+            arrowprops=dict(arrowstyle="-|>", color=C["border_s2"], lw=2,
+                            connectionstyle="arc3,rad=0"),
+            zorder=1)
+draw_arrow(FIG_W/2 + 4, rerun2_y, FIG_W - 1.5, rerun2_y,
+           color=C["border_s2"], lw=2, style="-")
+draw_arrow(FIG_W - 1.5, user_review_y, FIG_W/2 + 6, user_review_y,
+           color=C["border_s2"], lw=2)
+ax.text(FIG_W - 1.1, (user_review_y + rerun2_y) / 2, "loop",
+        fontsize=9, color=C["border_s2"], rotation=90, ha="center",
+        va="center", style="italic")
 
-# ── Legend ──
-legend_y = 0.7
+
+# ═══════════════════════════════════════════
+# LEGEND
+# ═══════════════════════════════════════════
+legend_y = 0.8
 legend_items = [
-    (C_USER, "User"),
-    (C_CLAUDE, "Claude Agent"),
-    (C_SCRIPT, "Python Script"),
-    (C_OUTPUT, "Output File"),
-    (C_DECISION, "Decision Logger"),
+    (C["user"], "User"),
+    (C["agent"], "Claude Agent"),
+    (C["script"], "Python Script"),
+    (C["output"], "Output File"),
+    (C["decision"], "● Decision Logged"),
 ]
+total_w = len(legend_items) * 3.2
+start_x = (FIG_W - total_w) / 2 + 0.5
 for i, (color, lbl) in enumerate(legend_items):
-    x = 1.5 + i * 2.8
-    rect = FancyBboxPatch((x, legend_y), 0.4, 0.3, boxstyle="round,pad=0.05",
-                          facecolor=color, edgecolor="none", alpha=0.9, zorder=2)
-    ax.add_patch(rect)
-    ax.text(x + 0.55, legend_y + 0.15, lbl, fontsize=7, va="center", color="#333333")
+    x = start_x + i * 3.2
+    if "●" in lbl:
+        ax.text(x, legend_y, "●", fontsize=14, color=color, ha="center",
+                va="center", weight="bold")
+        ax.text(x + 0.4, legend_y, lbl.replace("● ", ""), fontsize=10,
+                va="center", color=C["text"])
+    else:
+        rect = FancyBboxPatch((x - 0.3, legend_y - 0.2), 0.6, 0.4,
+                              boxstyle="round,pad=0.05", facecolor=color,
+                              edgecolor="none", alpha=0.9, zorder=2)
+        ax.add_patch(rect)
+        ax.text(x + 0.5, legend_y, lbl, fontsize=10, va="center",
+                color=C["text"])
 
-plt.tight_layout()
-plt.savefig("/Users/cfan/.claude/skills/systematic-review/docs/workflow_diagram.png", dpi=200, bbox_inches="tight",
-            facecolor="white", edgecolor="none")
+plt.tight_layout(pad=0.5)
+plt.savefig("/Users/cfan/.claude/skills/systematic-review/docs/workflow_diagram.png",
+            dpi=180, bbox_inches="tight", facecolor="white", edgecolor="none")
 print("Saved to docs/workflow_diagram.png")
