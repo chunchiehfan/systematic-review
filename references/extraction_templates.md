@@ -37,13 +37,15 @@ Jones 2021,2021,UK,Cohort,1200,"T2DM patients in primary care","SGLT2 inhibitor 
 
 ### OR / RR (Binary outcome)
 
-Columns: study, events_treatment, total_treatment, events_control, total_control, notes
+Columns: study, events_treatment, total_treatment, events_control, total_control, drug, dose, source_table, source_notes
 
 ```csv
-study,events_treatment,total_treatment,events_control,total_control,notes
-Smith 2020,45,230,67,225,
-Jones 2021,12,89,28,91,Adjusted for age and sex
+study,events_treatment,total_treatment,events_control,total_control,drug,dose,source_table,source_notes
+Smith 2020,45,230,67,225,empagliflozin,10mg,Table 3 row 2,
+Jones 2021,12,89,28,91,dapagliflozin,10mg,Table 2 row 1,SE converted to events using p-value
 ```
+
+Note: `drug` and `dose` columns are empty for non-pharmacological reviews.
 
 **What to extract:**
 - `events_treatment`: Number experiencing the outcome in intervention arm
@@ -60,12 +62,12 @@ Jones 2021,12,89,28,91,Adjusted for age and sex
 
 ### MD / SMD (Continuous outcome)
 
-Columns: study, mean_treatment, sd_treatment, n_treatment, mean_control, sd_control, n_control, notes
+Columns: study, mean_treatment, sd_treatment, n_treatment, mean_control, sd_control, n_control, drug, dose, source_table, source_notes
 
 ```csv
-study,mean_treatment,sd_treatment,n_treatment,mean_control,sd_control,n_control,notes
-Smith 2020,-1.2,0.8,120,-0.3,0.7,118,HbA1c % change from baseline at 52 weeks
-Jones 2021,-0.9,1.1,89,-0.1,0.9,91,
+study,mean_treatment,sd_treatment,n_treatment,mean_control,sd_control,n_control,drug,dose,source_table,source_notes
+Smith 2020,-1.2,0.8,120,-0.3,0.7,118,empagliflozin,10mg,Table 4 row 1,HbA1c % change from baseline at 52 weeks
+Jones 2021,-0.9,1.1,89,-0.1,0.9,91,,,Table 3 row 2,
 ```
 
 **What to extract:**
@@ -79,12 +81,12 @@ Jones 2021,-0.9,1.1,89,-0.1,0.9,91,
 
 ### HR (Survival / time-to-event)
 
-Columns: study, hr, lower_ci, upper_ci, notes
+Columns: study, hr, lower_ci, upper_ci, drug, dose, source_table, source_notes
 
 ```csv
-study,hr,lower_ci,upper_ci,notes
-Smith 2020,0.72,0.58,0.89,Adjusted HR from Cox regression
-Jones 2021,0.85,0.70,1.03,
+study,hr,lower_ci,upper_ci,drug,dose,source_table,source_notes
+Smith 2020,0.72,0.58,0.89,empagliflozin,10mg,Table 5 row 1,Adjusted HR from Cox regression
+Jones 2021,0.85,0.70,1.03,,,Table 3 row 4,
 ```
 
 **What to extract:**
@@ -146,6 +148,24 @@ Score ≥7 = low RoB; 4–6 = moderate; <4 = high.
 |---------|-------------|-----------------|----------------------|-----|-------------------|--------------|-------------|-----------------|-----------------|
 | [Primary] | 8 | 4,250 | OR 0.72 (0.61–0.85) | Low | Low (I²=18%) | Not serious | Not serious | Undetected | **Moderate** |
 | [Secondary] | 5 | 2,100 | MD −1.2 (−1.8 to −0.6) | Some concerns | Moderate (I²=45%) | Not serious | Serious | Undetected | **Low** |
+
+---
+
+## Effect Measure Frequency Summary Template
+
+Before choosing an effect measure, survey all included studies and produce this summary:
+
+```
+Effect measure reporting across included studies:
+  OR (odds ratio): N studies — reported directly
+  Raw events (convertible to OR/RR): N studies — event counts in results tables
+  HR (hazard ratio): N studies — Cox regression results
+  Adjusted OR: N studies — from multivariate logistic regression
+  MD (mean difference): N studies — continuous outcomes reported
+  SMD: N studies — different scales used
+```
+
+Use this summary to justify the chosen effect measure and log it with `decisions_logger`.
 
 ---
 
